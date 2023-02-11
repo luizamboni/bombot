@@ -110,7 +110,17 @@ def echo_all(message):
     global sessions
     # get data from user
     sender = message.json["from"]
-    conversation = sessions[sender["id"]]
+    try:
+        conversation = sessions[sender["id"]]
+    except:
+        conversation = Conversation("index", {
+            "user_id": sender["id"],
+            "first_name": sender["first_name"]
+        })
+        
+        sessions[sender["id"]] = conversation
+        conversation = sessions[sender["id"]]
+
     chat_id = message.chat.id
     try:
         acceptable_response = conversation.handle_response(message.text)
