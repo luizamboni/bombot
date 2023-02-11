@@ -1,9 +1,6 @@
 import telebot
 import os
-import re
-import yaml
-from yaml.loader import SafeLoader
-from telebot import apihelper, types
+from telebot import apihelper
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from unidecode import unidecode
 from conversation import Conversation, UnexpectedResponse
@@ -124,7 +121,7 @@ def echo_all(message):
                 process_script_part(section, chat_id)
         else:
             bot.send_message(chat_id, "sorry, i can't follow you")
-            
+
     except UnexpectedResponse as e:
         bot.send_message(chat_id, "sorry, i can't undestand it, can you type it in another way ?")
         

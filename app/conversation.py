@@ -2,7 +2,8 @@ import yaml
 from yaml.loader import SafeLoader
 import re
 
-def interpolate_text(text, variables, functions):
+
+def interpolate_text(text, variables):
     if not text:
         return None
 
@@ -11,16 +12,9 @@ def interpolate_text(text, variables, functions):
     slots = re.findall("\{.*?\}", interpolated_text)
     for slot in slots:
         slot_key = slot[1:-1]
-        template_function = functions.get(slot_key, None)
-        if template_function:
-            if not template_function.startswith("def"):
-                slot_value = eval(template_function)
-            else:
-                slot_value = "undef"
-        else:
-            slot_value = variables[slot_key]
-    
+        slot_value = variables[slot_key]
         interpolated_text = interpolated_text.replace(slot, str(slot_value))
+
     return interpolated_text
 
 class UnexpectedResponse(Exception):
@@ -81,12 +75,25 @@ class Conversation:
     def get_section(self):
         section = self.script[self.index]
         section_functions = section.get("functions", {})
+
+        for state_name, expression in section_functions.items():
+            variables = self.data
+            if type(expression) == list:
+                for current_expression in expression:
+                    value = eval(current_expression)
+                    if value:
+                        self.data[state_name] = value
+                        break
+            else:
+                self.data[state_name] = eval(expression)
+
         parsed_section = {
+            "index": self.index,
             "functions": section.get("functions", []),
-            "talks": list(map(lambda v: interpolate_text(v, self.data, section_functions), section.get("talks", []))),
-            "question": interpolate_text(section.get("question", None), self.data, section_functions),
-            "awnsers": list(map(lambda v: interpolate_text(v, self.data, section_functions), section.get("awnsers", []))),
-            "next": section.get("next", None),
+            "talks": list(map(lambda v: interpolate_text(v, self.data), section.get("talks", []))),
+            "question": interpolate_text(section.get("question", None), self.data),
+            "awnsers": list(map(lambda v: interpolate_text(v, self.data), section.get("awnsers", []))),
+            "next": interpolate_text(section.get("next", None), self.data),
             "state_filters": section.get("state_filters", []),
             "state": section.get("state", None),
         }

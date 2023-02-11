@@ -21,10 +21,50 @@ take the weight:
 
 imc:
   functions:
-    imc: round(int(variables["height"]) / int(variables["weight"]), 2)
+    imc: round(float(variables["weight"]) / float(variables["height"]) ** 2 * 10000, 2)
   talks: 
     - You have {height} of height and {weight} of weight
     - then your IMC is {imc}
+  next: diagnosis
+
+diagnosis:
+  functions:
+    diagnosis:
+      - '"heavy ovesity" if variables["imc"] > 39.9 else None'
+      - '"obesity" if variables["imc"] <= 39.9 and variables["imc"] > 29.9 else None'
+      - '"oversize" if variables["imc"] <= 29.9 and variables["imc"] > 24.9 else None'
+      - '"regular" if variables["imc"] <= 24.9 and variables["imc"] > 18.5 else None'
+      - '"skinny" if variables["imc"] <= 18.5 else None'
+  next: "{diagnosis}"
+
+
+skinny:
+  talks: 
+    - skinny
+  next: ends
+
+regular:
+  talks:
+    - regular
+  next: ends
+
+oversize:
+  talks:
+    - oversized
+  next: ends
+
+obesity:
+  talks:
+    - obesity
+  next: ends
+
+heavy ovesity:
+  talks:
+    - heavy ovesity
+  next: ends
+
+
+ends:
   question: do you want repeat ?
   awnsers:
     - no, leave me to index
@@ -39,4 +79,3 @@ no, leave me to index:
   talks:
     - ok
   next: dialogs:index
-
