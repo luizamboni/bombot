@@ -23,6 +23,9 @@ def interpolate_text(text, variables, functions):
         interpolated_text = interpolated_text.replace(slot, str(slot_value))
     return interpolated_text
 
+class UnexpectedResponse(Exception):
+    pass
+
 
 class Conversation:
 
@@ -46,7 +49,14 @@ class Conversation:
             response_matched = True
 
         if section["state"]:
-            self.data[section["state"]] = response_text
+            try: 
+                state = response_text
+                for filter in section.get("state_filters"):
+                    state = eval(filter)
+
+                self.data[section["state"]] = state
+            except:
+                raise UnexpectedResponse("not handled response")
 
         if section["next"]:                
             if section["next"].startswith("dialogs:"):
@@ -77,6 +87,7 @@ class Conversation:
             "question": interpolate_text(section.get("question", None), self.data, section_functions),
             "awnsers": list(map(lambda v: interpolate_text(v, self.data, section_functions), section.get("awnsers", []))),
             "next": section.get("next", None),
+            "state_filters": section.get("state_filters", []),
             "state": section.get("state", None),
         }
 

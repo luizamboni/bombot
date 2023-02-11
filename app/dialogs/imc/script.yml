@@ -2,20 +2,41 @@ start:
   talks: 
     - "well, {first_name}, we going to begin with your measurements"
   question: what are your highness ?
-  next: "take the weight" 
+  next: "take the weight"
+  state_filters: 
+    - re.sub(r"\s?[\.|m|cm]", "", state)
+    - int(state)
   state: height
 
 take the weight:
   talks: 
     - "ok, taking notes"
   question: what are your weight ?
-  next: end
+  next: imc
+  state_filters: 
+    - re.sub(r"(\s+)?kg", "", state)
+    - re.sub(r"\.\d+", "", state)
+    - int(state)
   state: weight
 
-end:
+imc:
   functions:
     imc: round(int(variables["height"]) / int(variables["weight"]), 2)
   talks: 
     - You have {height} of height and {weight} of weight
     - then your IMC is {imc}
+  question: do you want repeat ?
+  awnsers:
+    - no, leave me to index
+    - yes, calc a new imc
+
+yes, calc a new imc:
+  talks:
+    - ok
+  next: start
+
+no, leave me to index:
+  talks:
+    - ok
   next: dialogs:index
+

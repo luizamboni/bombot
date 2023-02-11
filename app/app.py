@@ -6,7 +6,7 @@ from yaml.loader import SafeLoader
 from telebot import apihelper, types
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from unidecode import unidecode
-from conversation import Conversation
+from conversation import Conversation, UnexpectedResponse
 apihelper.ENABLE_MIDDLEWARE = True
 
 token = os.environ["TELEGRAM_BOT_TOKEN"]
@@ -95,26 +95,37 @@ def callback_query(call):
     # if has a expected response
     sender = call.json["from"]
     conversation = sessions[sender["id"]]
+    chat_id = call.json["message"]["chat"]["id"]
+    try:
+        if conversation.handle_response(call.data):
+            bot.answer_callback_query(call.id, "Ok, understood")
+            sections = conversation.get_sections()
 
-    if conversation.handle_response(call.data):
-        bot.answer_callback_query(call.id, "Ok, understood")
-        sections = conversation.get_sections()
-
-        for section in sections:
-            process_script_part(section, call.json["message"]["chat"]["id"])
-    else:
-        bot.answer_callback_query(call.id, "i dont understand")
-
+            for section in sections:
+                process_script_part(section, chat_id)
+        else:
+            bot.answer_callback_query(call.id, "i dont understand")
+    except UnexpectedResponse as e:
+        bot.send_message(chat_id, "sorry, i can't undestand it, can you type it in another way ?")
+        
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
     global sessions
     # get data from user
     sender = message.json["from"]
     conversation = sessions[sender["id"]]
-    conversation.handle_response(message.text)
-    sections = conversation.get_sections()
-    
-    for section in sections:
-        process_script_part(section, message.chat.id)
+    chat_id = message.chat.id
+    try:
+        acceptable_response = conversation.handle_response(message.text)
+        if acceptable_response:
+            sections = conversation.get_sections()
 
+            for section in sections:
+                process_script_part(section, chat_id)
+        else:
+            bot.send_message(chat_id, "sorry, i can't follow you")
+            
+    except UnexpectedResponse as e:
+        bot.send_message(chat_id, "sorry, i can't undestand it, can you type it in another way ?")
+        
 bot.infinity_polling()
