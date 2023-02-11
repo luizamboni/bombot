@@ -1,0 +1,18 @@
+start: 
+  talks: 
+    - "hello {first_name}"
+  question: how can i help you today ?
+  awnsers:
+    - build a diet
+    - help me to build a train
+  state: road
+
+help me to build a train:
+  talks:
+    - ok, we are going to calculate your IMC
+  next: 'dialogs:imc'
+
+build a diet:
+  talks:
+    - ok, we are going to calculate your IMC
+  next: 'dialogs:imc'

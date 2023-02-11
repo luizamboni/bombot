@@ -1,0 +1,21 @@
+start:
+  talks: 
+    - "well, {first_name}, we going to begin with your measurements"
+  question: what are your highness ?
+  next: "take the weight" 
+  state: height
+
+take the weight:
+  talks: 
+    - "ok, taking notes"
+  question: what are your weight ?
+  next: end
+  state: weight
+
+end:
+  functions:
+    imc: round(int(variables["height"]) / int(variables["weight"]), 2)
+  talks: 
+    - You have {height} of height and {weight} of weight
+    - then your IMC is {imc}
+  next: dialogs:index
