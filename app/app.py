@@ -50,14 +50,14 @@ def extract_arg(arg):
 
 def process_script_part(section, chat_id):
 
-    for talk in section.get("talks", []):
+    for talk in section["talks"]:
         bot.send_message(chat_id, talk)
 
-    question = section.get("question", None)
+    question = section["question"]
     if question:
-        awnsers = section.get("awnsers", None)
+        awnsers = section["awnsers"]
         if awnsers:
-            markup_options = build_inline_keyboard_options(section.get("awnsers"))
+            markup_options = build_inline_keyboard_options(section["awnsers"])
             # for awnser in awnsers:
             #     question += f"\n<a href=\"{build_command_url(normalize_to_command(awnser))}\" >{awnser}</a>"
             bot.send_message(chat_id, question, reply_markup=markup_options, parse_mode="HTML")
@@ -91,9 +91,35 @@ def callback_query(call):
     global sessions
     # if has a expected response
     sender = call.json["from"]
-    conversation = sessions[sender["id"]]
-    chat_id = call.json["message"]["chat"]["id"]
+
+    conversation = None
     try:
+        conversation = sessions[sender["id"]]
+    except:
+        conversation = Conversation("index", {
+            "user_id": sender["id"],
+            "first_name": sender["first_name"]
+        })
+        
+        sessions[sender["id"]] = conversation
+    
+
+
+    chat_id = call.json["message"]["chat"]["id"]
+
+    if call.data == "restart interaction":
+        conversation = Conversation("index", {
+            "user_id": sender["id"],
+            "first_name": sender["first_name"]
+        })
+
+        sessions[sender["id"]] = conversation 
+        sections = conversation.get_sections()
+
+        for section in sections:
+            process_script_part(section, chat_id)
+
+    else:
         if conversation.handle_response(call.data):
             bot.answer_callback_query(call.id, "Ok, understood")
             sections = conversation.get_sections()
@@ -102,9 +128,7 @@ def callback_query(call):
                 process_script_part(section, chat_id)
         else:
             bot.answer_callback_query(call.id, "i dont understand")
-    except UnexpectedResponse as e:
-        bot.send_message(chat_id, "sorry, i can't undestand it, can you type it in another way ?")
-        
+
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
     global sessions
@@ -130,9 +154,15 @@ def echo_all(message):
             for section in sections:
                 process_script_part(section, chat_id)
         else:
-            bot.send_message(chat_id, "sorry, i can't follow you")
+            bot.send_message(
+                chat_id, 
+                "sorry, i can't follow you", 
+                reply_markup=build_inline_keyboard_options(["restart interaction"]),
+                parse_mode="HTML",
+            )
 
     except UnexpectedResponse as e:
-        bot.send_message(chat_id, "sorry, i can't undestand it, can you type it in another way ?")
+        bot.reply_to(message, "sorry, i can't undestand it, can you type it in another way ?")
+
         
 bot.infinity_polling()

@@ -3,16 +3,17 @@ start:
     - "hello {first_name}"
   question: how can i help you today ?
   awnsers:
-    - build a diet
-    - help me to build a train
+    - help me to calc my BMI (Body mass index)
+    - help me to build a training
   state: road
 
-help me to build a train:
+help me to calc my BMI (Body mass index):
   talks:
-    - ok, we are going to calculate your IMC
+    - ok, we are going to calculate your BMI
   next: 'dialogs:imc'
 
-build a diet:
+help me to build a training: 
   talks:
-    - ok, we are going to calculate your IMC
-  next: 'dialogs:imc'
+    - sorry, i can't help you with this yet
+    - in one time, perhaps
+  next: start
